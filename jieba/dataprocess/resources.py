@@ -7,6 +7,11 @@ from jieba._compat import *
 
 
 class DictResource(metaclass=ABCMeta):
+    """
+    This abstract class can be represent a source that can get dict record
+    which one contains 3 elements at least, they are: word, freq, tag
+    """
+
     @abstractmethod
     def get_record(self):
         """
@@ -35,6 +40,18 @@ class DictResource(metaclass=ABCMeta):
 
     @abstractmethod
     def get_last_modify_time(self):
+        pass
+
+    @abstractmethod
+    def __eq__(self, other):
+        pass
+
+    @abstractmethod
+    def __str__(self):
+        pass
+
+    @abstractmethod
+    def __hash__(self):
         pass
 
 
@@ -79,3 +96,6 @@ class FileDictResource(DictResource):
 
     def __eq__(self, other):
         return self._path == other._path
+
+    def __hash__(self) -> int:
+        return hash(self._path)
