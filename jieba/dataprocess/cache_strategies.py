@@ -19,6 +19,10 @@ class CacheStrategy(metaclass=ABCMeta):
     """
 
     @abstractmethod
+    def set_data_source(self, source):
+        pass
+
+    @abstractmethod
     def dump(self, data):
         """
         Dump data to cache
@@ -51,16 +55,6 @@ class CacheStrategy(metaclass=ABCMeta):
         """
         pass
 
-    @staticmethod
-    @abstractmethod
-    def get(*args):
-        """
-        This is a function method to get strategy instance
-        :param args:
-        :return:
-        """
-        pass
-
 
 class FileCacheStrategy(CacheStrategy):
     """
@@ -84,6 +78,9 @@ class FileCacheStrategy(CacheStrategy):
             os.path.join(tmp_dir or tempfile.gettempdir(), self._cache_file)
 
         self._tmp_dir = os.path.dirname(self._cache_file)
+
+    def set_data_source(self, source):
+        self._source = source
 
     def get_tmp_dir(self):
         return self._tmp_dir

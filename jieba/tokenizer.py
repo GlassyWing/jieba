@@ -80,6 +80,7 @@ class Tokenizer(object):
             self.cache_strategy = cache_strategy
         else:
             cache_strategy = self.cache_strategy
+        cache_strategy.set_data_source(dict_source)
 
         with self.lock:
             try:
@@ -96,14 +97,13 @@ class Tokenizer(object):
             t1 = time.time()
 
             load_from_cache_fail = True
-            strategy = cache_strategy.get(dict_source)
 
             # If the cache file existed and is not expired
-            if strategy.is_cache_exist() and not strategy.is_expires():
+            if cache_strategy.is_cache_exist() and not cache_strategy.is_expires():
                 default_logger.debug(
-                    "Loading model from cache: %s" % strategy)
+                    "Loading model from cache: %s" % cache_strategy)
                 try:
-                    self.FREQ, self.total = strategy.loads()
+                    self.FREQ, self.total = cache_strategy.loads()
                     load_from_cache_fail = False
                 except Exception:
                     load_from_cache_fail = True
@@ -114,9 +114,9 @@ class Tokenizer(object):
                 with wlock:
                     self.FREQ, self.total = self.gen_pfdict(self.get_dict_source())
                     default_logger.debug(
-                        "Dumping model to cache: %s" % strategy)
+                        "Dumping model to cache: %s" % cache_strategy)
                     try:
-                        strategy.dump((self.FREQ, self.total))
+                        cache_strategy.dump((self.FREQ, self.total))
                     except Exception:
                         default_logger.exception("Dump cache file failed.")
 

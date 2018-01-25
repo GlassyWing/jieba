@@ -7,7 +7,7 @@ import sys
 
 get_abs_path = lambda path: os.path.normpath(os.path.join(os.getcwd(), path))
 
-re_userdict = re.compile(r'^([^\s]+)\s*([0-9]+)?\s*([a-z]+)?$', re.U)
+re_userdict = re.compile(r'^(.+?)\s*([0-9]+)?\s*([a-z]+)?$', re.U)
 
 re_eng = re.compile('[a-zA-Z0-9]', re.U)
 
