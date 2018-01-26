@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from distutils.core import setup
+
 LONGDOC = """
 jieba
 =====
@@ -51,25 +52,26 @@ setup(name='jieba',
       url='https://github.com/fxsjy/jieba',
       license="MIT",
       classifiers=[
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: MIT License',
-        'Operating System :: OS Independent',
-        'Natural Language :: Chinese (Simplified)',
-        'Natural Language :: Chinese (Traditional)',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.2',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Topic :: Text Processing',
-        'Topic :: Text Processing :: Indexing',
-        'Topic :: Text Processing :: Linguistic',
+          'Intended Audience :: Developers',
+          'License :: OSI Approved :: MIT License',
+          'Operating System :: OS Independent',
+          'Natural Language :: Chinese (Simplified)',
+          'Natural Language :: Chinese (Traditional)',
+          'Programming Language :: Python',
+          'Programming Language :: Python :: 2',
+          'Programming Language :: Python :: 2.6',
+          'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3',
+          'Programming Language :: Python :: 3.2',
+          'Programming Language :: Python :: 3.3',
+          'Programming Language :: Python :: 3.4',
+          'Topic :: Text Processing',
+          'Topic :: Text Processing :: Indexing',
+          'Topic :: Text Processing :: Linguistic',
       ],
       keywords='NLP,tokenizing,Chinese word segementation',
       packages=['jieba'],
-      package_dir={'jieba':'jieba'},
-      package_data={'jieba':['*.*','finalseg/*','analyse/*','posseg/*', 'dataprocess/*']}
-)
+      package_dir={'jieba': 'jieba'},
+      package_data={'jieba': ['*.*', 'finalseg/*', 'analyse/*', 'posseg/*', 'dataprocess/*']},
+      install_requires=['rx>=1']
+      )
