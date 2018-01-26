@@ -140,7 +140,7 @@ class Tokenizer(object):
         wlock = DICT_WRITING.get(dict_source, threading.RLock())
         DICT_WRITING[dict_source] = wlock
         with wlock:
-            self.FREQ, self.total = self.gen_pfdict(self.get_dict_source())
+            self.FREQ, self.total = self.gen_pfdict(dict_source)
             default_logger.debug(
                 "Dumping model to cache: %s" % self.cache_strategy)
             try:
