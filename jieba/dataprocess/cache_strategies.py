@@ -20,9 +20,11 @@ class CacheStrategy(object):
 
     __metaclass__ = ABCMeta
 
-    @abstractmethod
+    def __init__(self, source=None):
+        self._source = source
+
     def set_data_source(self, source):
-        pass
+        self._source = source
 
     @abstractmethod
     def dump(self, data):
@@ -65,12 +67,9 @@ class FileCacheStrategy(CacheStrategy):
         :param cache_file: the path of cache file
         :param tmp_dir: the path of tmp dir
         """
+        super(FileCacheStrategy, self).__init__(source)
         self._cache_file = cache_file
         self._tmp_dir = tmp_dir
-        self._source = source
-
-    def set_data_source(self, source):
-        self._source = source
 
     def get_tmp_dir(self):
         cache_path = os.path.join(self._tmp_dir or tempfile.gettempdir(), self.get_cache_file())
