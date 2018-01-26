@@ -5,6 +5,7 @@ from . import finalseg
 from .dataprocess import *
 from ._compat import *
 from ._common import *
+from rx.subjects import Subject
 
 DICT_WRITING = {}
 
@@ -31,8 +32,11 @@ class Tokenizer(object):
         self.cache_strategy = cache_strategy
         self.FREQ = {}
         self.total = 0
+        self.dict_sub = Subject()
         self.user_word_tag_tab = {}
         self.initialized = False
+        # Indicates whether to add words in bulk
+        self.batch = False
 
     def __repr__(self):
         return '<Tokenizer dictionary=%r>' % self.dictionary
@@ -54,6 +58,14 @@ class Tokenizer(object):
                 if wfrag not in lfreq:
                     lfreq[wfrag] = 0
         return lfreq, ltotal
+
+    def register_notifier(self, dict_change_notifier):
+        """
+        Register an notifier that will send emission when dict has changed
+        :param dict_change_notifier: the notifier which is instance of Observer
+        :return:
+        """
+        self.dict_sub.subscribe(dict_change_notifier)
 
     def initialize(self, dict_source=None, cache_strategy=None):
         """
@@ -344,12 +356,16 @@ class Tokenizer(object):
             user_dict = dictionary
         else:
             raise ValueError("The expected 'dictionary' should be file path or instance of DictResource")
+        self.batch = True
+        change_list = []
         for word, freq, tag in user_dict.get_record():
             if freq is not None:
                 freq = freq.strip()
             if tag is not None:
                 tag = tag.strip()
-            self.add_word(word, freq, tag)
+            change_list += self.add_word(word, freq, tag)
+        self._notify(change_list)
+        self.batch = False
 
     def add_word(self, word, freq=None, tag=None):
         """
@@ -365,12 +381,21 @@ class Tokenizer(object):
         self.total += freq
         if tag:
             self.user_word_tag_tab[word] = tag
-        for ch in xrange(len(word)):
+
+        # count the words that have changed.
+        changed_list = []
+        changed_list.append((word, freq, tag))
+        for ch in xrange(len(word) - 1):
             wfrag = word[:ch + 1]
+            wfrag = wfrag.strip()
             if wfrag not in self.FREQ:
                 self.FREQ[wfrag] = 0
+                changed_list.append((wfrag, 0, None))
         if freq == 0:
             finalseg.add_force_split(word)
+        if not self.batch and len(changed_list) != 0:
+            self._notify(changed_list)
+        return changed_list
 
     def del_word(self, word):
         """
@@ -445,12 +470,17 @@ class Tokenizer(object):
     def set_dictionary(self, dict_source):
         """
         Set the path for dictionary
-        :param dictionary_path: the path to dictionary
+        :param dict_source: the path to dictionary
         :return:
         """
         with self.lock:
+            if isinstance(dict_source, text_type):
+                dict_source = FileDictResource(dict_source)
             self.dictionary = dict_source
             self.initialized = False
+
+    def _notify(self, changed_dict_list):
+        self.dict_sub.on_next((changed_dict_list, self.dictionary, self.cache_strategy))
 
 
 def _lcut_all(s):

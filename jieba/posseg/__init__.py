@@ -79,7 +79,7 @@ class POSTokenizer(object):
 
     def __init__(self, tokenizer=None):
         self.tokenizer = tokenizer or jieba.Tokenizer()
-        self.load_word_tag(self.tokenizer.get_dict_file())
+        self.load_word_tag(self.tokenizer.get_dict_source())
 
     def __repr__(self):
         return '<POSTokenizer tokenizer=%r>' % self.tokenizer
@@ -94,20 +94,10 @@ class POSTokenizer(object):
         self.tokenizer.initialize(dictionary)
         self.load_word_tag(self.tokenizer.get_dict_file())
 
-    def load_word_tag(self, f):
+    def load_word_tag(self, dict_source):
         self.word_tag_tab = {}
-        f_name = resolve_filename(f)
-        for lineno, line in enumerate(f, 1):
-            try:
-                line = line.strip().decode("utf-8")
-                if not line:
-                    continue
-                word, _, tag = line.split(" ")
-                self.word_tag_tab[word] = tag
-            except Exception:
-                raise ValueError(
-                    'invalid POS dictionary entry in %s at Line %s: %s' % (f_name, lineno, line))
-        f.close()
+        for word, _, tag in dict_source.get_record():
+            self.word_tag_tab[word] = tag
 
     def makesure_userdict_loaded(self):
         if self.tokenizer.user_word_tag_tab:
@@ -251,6 +241,7 @@ class POSTokenizer(object):
 
     def lcut(self, *args, **kwargs):
         return list(self.cut(*args, **kwargs))
+
 
 # default Tokenizer instance
 
