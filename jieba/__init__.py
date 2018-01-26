@@ -34,6 +34,7 @@ set_dictionary = dt.set_dictionary
 suggest_freq = dt.suggest_freq
 tokenize = dt.tokenize
 user_word_tag_tab = dt.user_word_tag_tab
+register_notifier = dt.register_notifier
 
 
 def _lcut_all(s):
