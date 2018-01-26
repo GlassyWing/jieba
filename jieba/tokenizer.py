@@ -121,26 +121,37 @@ class Tokenizer(object):
                     load_from_cache_fail = True
 
             if load_from_cache_fail:
-                wlock = DICT_WRITING.get(dict_source, threading.RLock())
-                DICT_WRITING[dict_source] = wlock
-                with wlock:
-                    self.FREQ, self.total = self.gen_pfdict(self.get_dict_source())
-                    default_logger.debug(
-                        "Dumping model to cache: %s" % cache_strategy)
-                    try:
-                        cache_strategy.dump((self.FREQ, self.total))
-                    except Exception:
-                        default_logger.exception("Dump cache file failed.")
-
-                try:
-                    del DICT_WRITING[dict_source]
-                except KeyError:
-                    pass
+                self.cache_dict_resource(dict_source)
 
             self.initialized = True
             default_logger.debug(
                 "Loading model cost %.3f seconds." % (time.time() - t1))
             default_logger.debug("Prefix dict has been built succesfully.")
+
+    def cache_dict_resource(self, dict_source, change_dict_source=False):
+        """
+        Cache the data in the dictionary source.
+        :param dict_source: dictionary source.
+        :param change_dict_source: Indicates should the dictionary source used be changed.
+        :return:
+        """
+        if change_dict_source:
+            self.set_dictionary(dict_source)
+        wlock = DICT_WRITING.get(dict_source, threading.RLock())
+        DICT_WRITING[dict_source] = wlock
+        with wlock:
+            self.FREQ, self.total = self.gen_pfdict(self.get_dict_source())
+            default_logger.debug(
+                "Dumping model to cache: %s" % self.cache_strategy)
+            try:
+                self.cache_strategy.dump((self.FREQ, self.total))
+            except Exception:
+                default_logger.exception("Dump cache file failed.")
+
+        try:
+            del DICT_WRITING[dict_source]
+        except KeyError:
+            pass
 
     def check_initialized(self):
         if not self.initialized:
