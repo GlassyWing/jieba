@@ -6,11 +6,13 @@ from jieba._common import *
 from jieba._compat import *
 
 
-class DictResource(metaclass=ABCMeta):
+class DictResource(object):
     """
     This abstract class can be represent a source that can get dict record
     which one contains 3 elements at least, they are: word, freq, tag
     """
+
+    __metaclass__ = ABCMeta
 
     @abstractmethod
     def get_record(self):

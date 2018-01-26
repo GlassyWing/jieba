@@ -13,10 +13,12 @@ else:
     _replace_file = os.rename
 
 
-class CacheStrategy(metaclass=ABCMeta):
+class CacheStrategy(object):
     """
     The class represent the strategy to cache inner data
     """
+
+    __metaclass__ = ABCMeta
 
     @abstractmethod
     def set_data_source(self, source):
