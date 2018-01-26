@@ -4,16 +4,16 @@ import os
 import jieba
 import jieba.posseg
 from operator import itemgetter
+from jieba._common import *
 
 _get_module_path = lambda path: os.path.normpath(os.path.join(os.getcwd(),
-                                                 os.path.dirname(__file__), path))
-_get_abs_path = jieba._get_abs_path
+                                                              os.path.dirname(__file__), path))
+_get_abs_path = jieba.get_abs_path
 
 DEFAULT_IDF = _get_module_path("idf.txt")
 
 
 class KeywordExtractor(object):
-
     STOP_WORDS = set((
         "the", "of", "is", "and", "to", "in", "that", "we", "for", "an", "are",
         "by", "be", "as", "on", "with", "can", "if", "from", "which", "you", "it",

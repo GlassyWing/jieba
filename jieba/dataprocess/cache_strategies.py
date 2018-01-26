@@ -59,7 +59,7 @@ class FileCacheStrategy(CacheStrategy):
     This class used to process file cache
     """
 
-    def __init__(self, cache_file=None, tmp_dir=None):
+    def __init__(self, cache_file=None, tmp_dir=None, source=None):
         """
         Initialize the instance
         :param cache_file: the path of cache file
@@ -67,6 +67,7 @@ class FileCacheStrategy(CacheStrategy):
         """
         self._cache_file = cache_file
         self._tmp_dir = tmp_dir
+        self._source = source
 
     def set_data_source(self, source):
         self._source = source

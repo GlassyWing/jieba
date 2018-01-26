@@ -470,10 +470,12 @@ class Tokenizer(object):
     def set_dictionary(self, dict_source):
         """
         Set the path for dictionary
-        :param dictionary_path: the path to dictionary
+        :param dict_source: the path to dictionary
         :return:
         """
         with self.lock:
+            if isinstance(dict_source, text_type):
+                dict_source = FileDictResource(dict_source)
             self.dictionary = dict_source
             self.initialized = False
 
