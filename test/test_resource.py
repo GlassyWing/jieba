@@ -12,9 +12,9 @@ class TestResource(unittest.TestCase):
         self.assertEqual(a, b)
         self.assertNotEqual(a, c)
 
-    # def test_default_file_resource(self):
-    #     for word, freq, word_class in DEFAULT_DICT.get_record():
-    #         print(word, freq, word_class)
+    def test_default_file_resource(self):
+        for word, freq, word_class in DEFAULT_DICT.get_record():
+            print(word, freq, word_class)
 
     def test_file_resource(self):
         resource = FileDictResource('foobar.txt')

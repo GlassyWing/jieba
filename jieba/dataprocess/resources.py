@@ -31,23 +31,7 @@ class DictResource(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_data_source(self):
-        """
-        Return the data source
-        :return:
-        """
-        pass
-
-    @abstractmethod
-    def get_last_modify_time(self):
-        pass
-
-    @abstractmethod
     def __eq__(self, other):
-        pass
-
-    @abstractmethod
-    def __str__(self):
         pass
 
     @abstractmethod
@@ -67,9 +51,6 @@ class FileDictResource(DictResource):
     def get_lrecord(self):
         return list(self.get_record())
 
-    def get_data_source(self):
-        return self._path
-
     def get_record(self):
         with open(self._path, 'rb') as f:
             for no, ln in enumerate(f, 1):
@@ -88,14 +69,14 @@ class FileDictResource(DictResource):
                     raise ValueError(
                         'invalid dictionary entry in %s at Line %s: %s' % (f.name, no, line))
 
-    def get_last_modify_time(self):
-        return os.path.getmtime(self._path)
-
     def __str__(self):
         return self._path
 
     def __eq__(self, other):
-        return self._path == other._path
+        if self is other: return True
+        if isinstance(other, FileDictResource):
+            return self._path == other._path
+        return False
 
     def __hash__(self) -> int:
         return hash(self._path)

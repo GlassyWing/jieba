@@ -62,17 +62,17 @@ class Tokenizer(object):
         :param cache_strategy: the cache strategy which used to process the inner data
         :return:
         """
-        if dict_source:
 
+        # If it's already initialized.
+        if self.dictionary == dict_source and self.cache_strategy == cache_strategy and self.initialized:
+            return
+        else:
+            self.initialized = False
+
+        if dict_source:
             if isinstance(dict_source, string_types):
                 dict_source = FileDictResource(dict_source)
-
-            # If had initialized
-            if self.dictionary == dict_source and self.initialized:
-                return
-            else:
-                self.dictionary = dict_source
-                self.initialized = False
+            self.dictionary = dict_source
         else:
             dict_source = self.dictionary
 
@@ -98,8 +98,8 @@ class Tokenizer(object):
 
             load_from_cache_fail = True
 
-            # If the cache file existed and is not expired
-            if cache_strategy.is_cache_exist() and not cache_strategy.is_expires():
+            # If the cache file existed
+            if cache_strategy.is_cache_exist():
                 default_logger.debug(
                     "Loading model from cache: %s" % cache_strategy)
                 try:
@@ -343,7 +343,7 @@ class Tokenizer(object):
         elif isinstance(dictionary, DictResource):
             user_dict = dictionary
         else:
-            raise ValueError("The expected 'dictionary' should be file path or instance of DictResource");
+            raise ValueError("The expected 'dictionary' should be file path or instance of DictResource")
         for word, freq, tag in user_dict.get_record():
             if freq is not None:
                 freq = freq.strip()
