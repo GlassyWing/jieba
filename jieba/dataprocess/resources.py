@@ -6,12 +6,7 @@ from jieba._common import *
 from jieba._compat import *
 
 
-class DictResource(object):
-    """
-    This abstract class can be represent a source that can get dict record
-    which one contains 3 elements at least, they are: word, freq, tag
-    """
-
+class Resource(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
@@ -23,14 +18,16 @@ class DictResource(object):
         """
         pass
 
-    @abstractmethod
     def get_lrecord(self):
         """
         Get record sequences which
         in the form of [(word, freq),...]
         :return:
         """
-        pass
+        return list(self.get_record())
+
+    def __str__(self):
+        return self.__class__.__name__
 
     @abstractmethod
     def __eq__(self, other):
@@ -38,6 +35,17 @@ class DictResource(object):
 
     @abstractmethod
     def __hash__(self):
+        pass
+
+
+class DictResource(Resource):
+    """
+    This abstract class can be represent a source that can get dict record
+    which one contains 3 elements at least, they are: word, freq, tag
+    """
+
+    @abstractmethod
+    def get_record(self):
         pass
 
 
@@ -49,9 +57,6 @@ class FileDictResource(DictResource):
     def __init__(self, path):
         path = get_abs_path(path)
         self._path = path
-
-    def get_lrecord(self):
-        return list(self.get_record())
 
     def get_record(self):
         with open(self._path, 'rb') as f:
@@ -72,7 +77,7 @@ class FileDictResource(DictResource):
                         'invalid dictionary entry in %s at Line %s: %s' % (f.name, no, line))
 
     def __str__(self):
-        return self._path
+        return '{}:{}'.format(super(FileDictResource, self).__str__(), self._path)
 
     def __eq__(self, other):
         if self is other: return True
@@ -81,4 +86,4 @@ class FileDictResource(DictResource):
         return False
 
     def __hash__(self) -> int:
-        return hash(self._path)
+        return hash(self.__str__())
