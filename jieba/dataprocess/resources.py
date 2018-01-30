@@ -49,9 +49,37 @@ class DictResource(Resource):
         pass
 
 
+class PureDictResource(DictResource):
+    """
+    This class represent dictionary source from a python sequence
+    """
+
+    def __init__(self, words_seq):
+        self._words_seq = words_seq
+
+    def get_record(self):
+        for record in iter(self._words_seq):
+            yield convert_to_word_record(*record)
+
+    def get_lrecord(self):
+        return self._words_seq
+
+    def __eq__(self, other):
+        if self is other: return True
+        if isinstance(other, PureDictResource):
+            return self._words_seq == other._words_seq
+        return False
+
+    def __str__(self):
+        return '{}:{}'.format(super(PureDictResource, self).__str__(), self._words_seq)
+
+    def __hash__(self):
+        return hash(self.__str__())
+
+
 class FileDictResource(DictResource):
     """
-    This class represent data source from a file
+    This class represent dictionary source from a file
     """
 
     def __init__(self, path):
