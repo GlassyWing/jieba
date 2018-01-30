@@ -6,6 +6,7 @@ from .dataprocess import *
 from ._compat import *
 from ._common import *
 from rx.subjects import Subject
+import typing
 
 DICT_WRITING = {}
 
@@ -129,15 +130,18 @@ class Tokenizer(object):
                 "Loading model cost %.3f seconds." % (time.time() - t1))
             default_logger.debug("Prefix dict has been built succesfully.")
 
-    def cache_dict_resource(self, dict_source, change_dict_source=False):
+    def cache_dict_resource(self, dict_source=None, change_dict_source=False):
         """
-        Cache the data in the dictionary source.
+        Forced cache dictionary source.
         :param dict_source: dictionary source.
         :param change_dict_source: Indicates should the dictionary source used be changed.
         :return:
         """
-        if change_dict_source:
+        if dict_source and change_dict_source:
             self.set_dictionary(dict_source)
+        else:
+            dict_source = self.get_dict_source()
+
         wlock = DICT_WRITING.get(dict_source, threading.RLock())
         DICT_WRITING[dict_source] = wlock
         with wlock:
@@ -148,6 +152,8 @@ class Tokenizer(object):
                 self.dict_cache_strategy.dump((self.FREQ, self.total))
             except Exception:
                 default_logger.exception("Dump cache file failed.")
+            default_logger.debug(
+                "Dumping model to cache: %s done!" % self.dict_cache_strategy)
 
         try:
             del DICT_WRITING[dict_source]
@@ -366,12 +372,14 @@ class Tokenizer(object):
             user_dict = FileDictResource(dictionary)
         elif isinstance(dictionary, DictResource):
             user_dict = dictionary
+        elif isinstance(dictionary, typing.List):
+            user_dict = PureDictResource(dictionary)
         else:
-            raise ValueError("The expected 'dictionary' should be file path or instance of DictResource")
+            raise ValueError("The expected 'dictionary' should be file path or sequence or instance of DictResource")
         self.batch = True
         change_list = []
         for word, freq, tag in user_dict.get_record():
-            if freq is not None:
+            if freq is not None and isinstance(freq, string_types):
                 freq = freq.strip()
             if tag is not None:
                 tag = tag.strip()

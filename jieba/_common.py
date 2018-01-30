@@ -34,3 +34,6 @@ def init_log(name):
         logger.setLevel(logging.DEBUG)
     return logger
 
+
+def convert_to_word_record(word, freq=0, tag=None):
+    return word, freq, tag
