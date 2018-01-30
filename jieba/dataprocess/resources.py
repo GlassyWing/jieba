@@ -51,7 +51,8 @@ class DictResource(Resource):
 
 class PureDictResource(DictResource):
     """
-    This class represent dictionary source from a python sequence
+    This class represent dictionary source from a python sequence which item
+    in is in form of (word,freq=None,tag=None)
     """
 
     def __init__(self, words_seq):
