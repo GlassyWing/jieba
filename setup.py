@@ -73,5 +73,5 @@ setup(name='jieba',
       packages=['jieba'],
       package_dir={'jieba': 'jieba'},
       package_data={'jieba': ['*.*', 'finalseg/*', 'analyse/*', 'posseg/*', 'dataprocess/*']},
-      install_requires=['rx>=1']
+      install_requires=['rx>=1.6']
       )
