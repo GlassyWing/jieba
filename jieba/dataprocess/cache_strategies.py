@@ -55,6 +55,9 @@ class CacheStrategy(object):
     def remove_cache(self):
         pass
 
+    def __str__(self):
+        return self.__class__.__name__
+
 
 class FileCacheStrategy(CacheStrategy):
     """
@@ -86,15 +89,13 @@ class FileCacheStrategy(CacheStrategy):
                    % md5(str(self._source).encode('utf-8', 'replace')).hexdigest()
         return "jieba.cache"
 
+    @abstractmethod
     def dump(self, data):
-        fd, fpath = tempfile.mkstemp(dir=self.get_tmp_dir())
-        with os.fdopen(fd, 'wb') as temp_cache_file:
-            marshal.dump(data, temp_cache_file)
-        _replace_file(fpath, self.get_cache_path())
+        pass
 
+    @abstractmethod
     def loads(self):
-        with open(self.get_cache_path(), 'rb') as cf:
-            return marshal.load(cf)
+        pass
 
     def is_cache_exist(self):
         return os.path.isfile(self.get_cache_path())
@@ -105,10 +106,24 @@ class FileCacheStrategy(CacheStrategy):
         return True
 
     def __str__(self):
-        return self.get_cache_path()
+        return '{}:{}'.format(super(FileCacheStrategy, self).__str__(), self.get_cache_path())
 
     def __eq__(self, other):
         if self is other: return True
         if isinstance(other, FileCacheStrategy):
             return self.get_cache_path() == other.get_cache_path()
         return False
+
+
+class FileCacheStrategyForDict(FileCacheStrategy):
+
+    def dump(self, data):
+        fd, fpath = tempfile.mkstemp(dir=self.get_tmp_dir())
+        with os.fdopen(fd, 'wb') as temp_cache_file:
+            marshal.dump(data, temp_cache_file)
+        _replace_file(fpath, self.get_cache_path())
+
+    def loads(self):
+        with open(self.get_cache_path(), 'rb') as cf:
+            return marshal.load(cf)
+

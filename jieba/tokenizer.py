@@ -17,11 +17,11 @@ class Tokenizer(object):
     The Tokenizer used to cut words
     """
 
-    def __init__(self, dict_source=DEFAULT_DICT, cache_strategy=DEFAULT_CACHE_STRATEGY):
+    def __init__(self, dict_source=DEFAULT_DICT, dict_cache_strategy=DEFAULT_DICT_CACHE_STRATEGY):
         """
         Initialize the Tokenizer
         :param dict_source: the path of dictionary, or the instance of DictResource.
-        :param cache_strategy: the cache strategy which used to process the inner data
+        :param dict_cache_strategy: the cache strategy which used to process the inner data
         """
         self.lock = threading.RLock()
 
@@ -29,7 +29,7 @@ class Tokenizer(object):
             self.dictionary = FileDictResource(dict_source)
         else:
             self.dictionary = dict_source
-        self.cache_strategy = cache_strategy
+        self.dict_cache_strategy = dict_cache_strategy
         self.FREQ = {}
         self.total = 0
         self.dict_sub = Subject()
@@ -67,16 +67,16 @@ class Tokenizer(object):
         """
         self.dict_sub.subscribe(dict_change_notifier)
 
-    def initialize(self, dict_source=None, cache_strategy=None):
+    def initialize(self, dict_source=None, dict_cache_strategy=None):
         """
         Initialize the Tokenizer
         :param dict_source: the path of dictionary, or the instance of DictResource.
-        :param cache_strategy: the cache strategy which used to process the inner data
+        :param dict_cache_strategy: the cache strategy which used to process the inner data
         :return:
         """
 
         # If it's already initialized.
-        if self.dictionary == dict_source and self.cache_strategy == cache_strategy and self.initialized:
+        if self.dictionary == dict_source and self.dict_cache_strategy == dict_cache_strategy and self.initialized:
             return
         else:
             self.initialized = False
@@ -88,11 +88,12 @@ class Tokenizer(object):
         else:
             dict_source = self.dictionary
 
-        if cache_strategy:
-            self.cache_strategy = cache_strategy
+        if dict_cache_strategy:
+            self.dict_cache_strategy = dict_cache_strategy
         else:
-            cache_strategy = self.cache_strategy
-        cache_strategy.set_data_source(dict_source)
+            dict_cache_strategy = self.dict_cache_strategy
+
+            dict_cache_strategy.set_data_source(dict_source)
 
         with self.lock:
             try:
@@ -111,11 +112,11 @@ class Tokenizer(object):
             load_from_cache_fail = True
 
             # If the cache file existed
-            if cache_strategy.is_cache_exist():
+            if dict_cache_strategy.is_cache_exist():
                 default_logger.debug(
-                    "Loading model from cache: %s" % cache_strategy)
+                    "Loading model from cache: %s" % dict_cache_strategy)
                 try:
-                    self.FREQ, self.total = cache_strategy.loads()
+                    self.FREQ, self.total = dict_cache_strategy.loads()
                     load_from_cache_fail = False
                 except Exception:
                     load_from_cache_fail = True
@@ -142,9 +143,9 @@ class Tokenizer(object):
         with wlock:
             self.FREQ, self.total = self.gen_pfdict(dict_source)
             default_logger.debug(
-                "Dumping model to cache: %s" % self.cache_strategy)
+                "Dumping model to cache: %s" % self.dict_cache_strategy)
             try:
-                self.cache_strategy.dump((self.FREQ, self.total))
+                self.dict_cache_strategy.dump((self.FREQ, self.total))
             except Exception:
                 default_logger.exception("Dump cache file failed.")
 
@@ -491,7 +492,7 @@ class Tokenizer(object):
             self.initialized = False
 
     def _notify(self, changed_dict_list):
-        self.dict_sub.on_next((changed_dict_list, self.dictionary, self.cache_strategy))
+        self.dict_sub.on_next((changed_dict_list, self.dictionary))
 
 
 def _lcut_all(s):

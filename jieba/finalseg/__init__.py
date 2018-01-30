@@ -1,16 +1,14 @@
 from __future__ import absolute_import, unicode_literals
 import re
-import os
-import sys
 import pickle
 from .._compat import *
+from jieba.dataprocess import *
 
 MIN_FLOAT = -3.14e100
 
 PROB_START_P = "prob_start.p"
 PROB_TRANS_P = "prob_trans.p"
 PROB_EMIT_P = "prob_emit.p"
-
 
 PrevStatus = {
     'B': 'ES',
@@ -25,6 +23,7 @@ def load_model():
     trans_p = pickle.load(get_module_res("finalseg", PROB_TRANS_P))
     emit_p = pickle.load(get_module_res("finalseg", PROB_EMIT_P))
     return start_p, trans_p, emit_p
+
 
 if sys.platform.startswith("java"):
     start_P, trans_P, emit_P = load_model()
@@ -74,6 +73,7 @@ def __cut(sentence):
     if nexti < len(sentence):
         yield sentence[nexti:]
 
+
 re_han = re.compile("([\u4E00-\u9FD5]+)")
 re_skip = re.compile("([a-zA-Z0-9]+(?:\.\d+)?%?)")
 
@@ -81,6 +81,7 @@ re_skip = re.compile("([a-zA-Z0-9]+(?:\.\d+)?%?)")
 def add_force_split(word):
     global Force_Split_Words
     Force_Split_Words.add(word)
+
 
 def cut(sentence):
     sentence = strdecode(sentence)
