@@ -372,7 +372,7 @@ class Tokenizer(object):
             user_dict = FileDictResource(dictionary)
         elif isinstance(dictionary, DictResource):
             user_dict = dictionary
-        elif isinstance(dictionary, typing.List):
+        elif isinstance(dictionary, typing.Sequence):
             user_dict = PureDictResource(dictionary)
         else:
             raise ValueError("The expected 'dictionary' should be file path or sequence or instance of DictResource")
