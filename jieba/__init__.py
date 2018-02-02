@@ -27,7 +27,7 @@ cut_for_search = dt.cut_for_search
 lcut_for_search = dt.lcut_for_search
 del_word = dt.del_word
 get_DAG = dt.get_DAG
-get_dict_source = dt.get_dict_source()
+get_dictionary = dt.get_dictionary
 initialize = dt.initialize
 load_userdict = dt.load_userdict
 set_dictionary = dt.set_dictionary
@@ -36,6 +36,8 @@ tokenize = dt.tokenize
 user_word_tag_tab = dt.user_word_tag_tab
 register_notifier = dt.register_notifier
 cache_dict_resource = dt.cache_dict_resource
+set_force_split_words = Tokenizer.set_force_split_words
+get_force_split_words = Tokenizer.get_force_split_words
 
 
 def _lcut_all(s):

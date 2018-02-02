@@ -5,7 +5,7 @@ import jieba
 
 class CacheTest(unittest.TestCase):
     def test_file_cache(self):
-        cache = FileCacheStrategy()
+        cache = FileCacheStrategyForDict()
         print(cache.get_cache_file())
         print(cache.get_tmp_dir())
         cache.dump(({'a': 20}, 20))

@@ -20,14 +20,17 @@ class TestResource(unittest.TestCase):
         resource = FileDictResource('foobar.txt')
         self.assertEqual(resource.get_lrecord(), [('好人', '12', 'n')])
 
-    def test_file_record(self):
-        resource = FileDictResource('foobar.txt')
-
     def test_to_string(self):
         self.assertEqual(
             str(FileDictResource('foobar.txt'))
-            , r'E:\python\jieba\test\foobar.txt'
+            , r'FileDictResource:E:\python\jieba\test\foobar.txt'
         )
+
+    def test_dump_source(self):
+        a = FileDictResource('foobar.txt', DEFAULT_DICT_CACHE_STRATEGY)
+        # a.dump()
+        data = a.load_from_cache()
+        print(data)
 
 
 

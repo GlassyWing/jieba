@@ -4,13 +4,32 @@ from abc import ABCMeta, abstractmethod
 
 from jieba._common import *
 from jieba._compat import *
+from .cache_strategies import CacheStrategy, FileCacheStrategyForDict
+import typing
+
+DEFAULT_CACHE_STRATEGY = FileCacheStrategyForDict()
 
 
 class Resource(object):
     __metaclass__ = ABCMeta
 
+    def __init__(self, cache_strategy: CacheStrategy):
+        self._cache_strategy = cache_strategy
+        self._set_cache_strategy()
+
+    def set_cache_strategy(self, cache_strategy: CacheStrategy):
+        self._cache_strategy = cache_strategy
+        self._set_cache_strategy()
+
+    def _set_cache_strategy(self):
+        if self._cache_strategy:
+            self._cache_strategy.set_data_source(self)
+
+    def get_cache_strategy(self):
+        return self._cache_strategy
+
     @abstractmethod
-    def get_record(self):
+    def get_record(self) -> typing.Iterable:
         """
         The method should return a generator
          which generate a tuple(word, freq)
@@ -26,12 +45,23 @@ class Resource(object):
         """
         return list(self.get_record())
 
+    def dump_to_cache(self, data=None):
+        if data:
+            self._cache_strategy.dump(data)
+        else:
+            self._cache_strategy.dump(self.get_lrecord())
+
+    def load_from_cache(self):
+        if self._cache_strategy.is_cache_exist():
+            return self._cache_strategy.loads()
+        return None
+
     def __str__(self):
         return self.__class__.__name__
 
     @abstractmethod
     def __eq__(self, other):
-        pass
+        return self.get_cache_strategy() == other.get_cache_strategy()
 
     @abstractmethod
     def __hash__(self):
@@ -44,18 +74,47 @@ class DictResource(Resource):
     which one contains 3 elements at least, they are: word, freq, tag
     """
 
+    def __init__(self, cache_strategy):
+        super(DictResource, self).__init__(cache_strategy)
+
     @abstractmethod
-    def get_record(self):
+    def get_record(self) -> typing.Iterable:
         pass
+
+    def gen_pfdict(self):
+        """
+        Read from a dictionary source, and count the numbers of words
+        :param dict_source: dictionary source
+        :return: A tuple in the form of ({'word1':freq1,...}, total_freq)
+        """
+        lfreq = {}
+        ltotal = 0
+        for word, freq, tag in self.get_record():
+            freq = int(freq)
+            lfreq[word] = freq
+            ltotal += freq
+            for ch in xrange(len(word)):
+                wfrag = word[:ch + 1]
+                if wfrag not in lfreq:
+                    lfreq[wfrag] = 0
+        return lfreq, ltotal
+
+    def dump_to_cache(self, data=None):
+        if data:
+            self.get_cache_strategy().dump(data)
+        else:
+            data = self.gen_pfdict()
+            self.get_cache_strategy().dump(data)
 
 
 class PureDictResource(DictResource):
     """
     This class represent dictionary source from a python sequence which item
-    in is in form of (word,freq=None,tag=None)
+    in this is in form of (word,freq=None,tag=None)
     """
 
-    def __init__(self, words_seq):
+    def __init__(self, words_seq, cache_strategy=DEFAULT_CACHE_STRATEGY):
+        super(PureDictResource, self).__init__(cache_strategy)
         self._words_seq = words_seq
 
     def get_record(self):
@@ -68,7 +127,7 @@ class PureDictResource(DictResource):
     def __eq__(self, other):
         if self is other: return True
         if isinstance(other, PureDictResource):
-            return self._words_seq == other._words_seq
+            return self._words_seq == other._words_seq and super(PureDictResource, self).__eq__(other)
         return False
 
     def __str__(self):
@@ -83,7 +142,8 @@ class FileDictResource(DictResource):
     This class represent dictionary source from a file
     """
 
-    def __init__(self, path):
+    def __init__(self, path, cache_strategy=DEFAULT_CACHE_STRATEGY):
+        super(FileDictResource, self).__init__(cache_strategy)
         path = get_abs_path(path)
         self._path = path
 
@@ -111,7 +171,7 @@ class FileDictResource(DictResource):
     def __eq__(self, other):
         if self is other: return True
         if isinstance(other, FileDictResource):
-            return self._path == other._path
+            return self._path == other._path and super(FileDictResource, self).__eq__(other)
         return False
 
     def __hash__(self) -> int:

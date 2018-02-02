@@ -1,6 +1,7 @@
 # encoding=utf-8
 import marshal
 import tempfile
+from jieba._common import *
 from abc import abstractmethod, ABCMeta
 from hashlib import md5
 
@@ -11,6 +12,8 @@ if os.name == 'nt':
     from shutil import move as _replace_file
 else:
     _replace_file = os.rename
+
+logger = init_log('CacheStrategy')
 
 
 class CacheStrategy(object):
@@ -118,12 +121,13 @@ class FileCacheStrategy(CacheStrategy):
 class FileCacheStrategyForDict(FileCacheStrategy):
 
     def dump(self, data):
+
         fd, fpath = tempfile.mkstemp(dir=self.get_tmp_dir())
         with os.fdopen(fd, 'wb') as temp_cache_file:
             marshal.dump(data, temp_cache_file)
         _replace_file(fpath, self.get_cache_path())
 
     def loads(self):
+        logger.debug("Loading model from cache: %s" % self)
         with open(self.get_cache_path(), 'rb') as cf:
             return marshal.load(cf)
-

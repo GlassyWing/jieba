@@ -1,12 +1,14 @@
-import time
 import threading
-from math import log
-from . import finalseg
-from .dataprocess import *
-from ._compat import *
-from ._common import *
-from rx.subjects import Subject
+import time
 import typing
+from math import log
+
+from rx.subjects import Subject
+
+from . import finalseg
+from ._common import *
+from ._compat import *
+from .dataprocess import *
 
 DICT_WRITING = {}
 
@@ -18,11 +20,10 @@ class Tokenizer(object):
     The Tokenizer used to cut words
     """
 
-    def __init__(self, dict_source=DEFAULT_DICT, dict_cache_strategy=DEFAULT_DICT_CACHE_STRATEGY):
+    def __init__(self, dict_source=DEFAULT_DICT):
         """
         Initialize the Tokenizer
         :param dict_source: the path of dictionary, or the instance of DictResource.
-        :param dict_cache_strategy: the cache strategy which used to process the inner data
         """
         self.lock = threading.RLock()
 
@@ -30,7 +31,6 @@ class Tokenizer(object):
             self.dictionary = FileDictResource(dict_source)
         else:
             self.dictionary = dict_source
-        self.dict_cache_strategy = dict_cache_strategy
         self.FREQ = {}
         self.total = 0
         self.dict_sub = Subject()
@@ -42,42 +42,23 @@ class Tokenizer(object):
     def __repr__(self):
         return '<Tokenizer dictionary=%r>' % self.dictionary
 
-    def gen_pfdict(self, dict_source):
-        """
-        Read from a dictionary source, and count the numbers of words
-        :param dict_source: dictionary source
-        :return: A tuple in the form of ({'word1':freq1,...}, total_freq)
-        """
-        lfreq = {}
-        ltotal = 0
-        for word, freq, tag in dict_source.get_record():
-            freq = int(freq)
-            lfreq[word] = freq
-            ltotal += freq
-            for ch in xrange(len(word)):
-                wfrag = word[:ch + 1]
-                if wfrag not in lfreq:
-                    lfreq[wfrag] = 0
-        return lfreq, ltotal
-
     def register_notifier(self, dict_change_notifier):
         """
         Register an notifier that will send emission when dict has changed
-        :param dict_change_notifier: the notifier which is instance of Observer
+        :param dict_change_notifier: the notifier is an instance of Observer
         :return:
         """
         self.dict_sub.subscribe(dict_change_notifier)
 
-    def initialize(self, dict_source=None, dict_cache_strategy=None):
+    def initialize(self, dict_source=None):
         """
         Initialize the Tokenizer
         :param dict_source: the path of dictionary, or the instance of DictResource.
-        :param dict_cache_strategy: the cache strategy which used to process the inner data
         :return:
         """
 
         # If it's already initialized.
-        if self.dictionary == dict_source and self.dict_cache_strategy == dict_cache_strategy and self.initialized:
+        if self.dictionary == dict_source and self.initialized:
             return
         else:
             self.initialized = False
@@ -88,13 +69,6 @@ class Tokenizer(object):
             self.dictionary = dict_source
         else:
             dict_source = self.dictionary
-
-        if dict_cache_strategy:
-            self.dict_cache_strategy = dict_cache_strategy
-        else:
-            dict_cache_strategy = self.dict_cache_strategy
-
-            dict_cache_strategy.set_data_source(dict_source)
 
         with self.lock:
             try:
@@ -109,21 +83,21 @@ class Tokenizer(object):
 
             default_logger.debug("Building prefix dict from %s ..." % (dict_source or 'the default dictionary'))
             t1 = time.time()
+            try:
 
-            load_from_cache_fail = True
-
-            # If the cache file existed
-            if dict_cache_strategy.is_cache_exist():
-                default_logger.debug(
-                    "Loading model from cache: %s" % dict_cache_strategy)
-                try:
-                    self.FREQ, self.total = dict_cache_strategy.loads()
+                data = dict_source.load_from_cache()
+                if data:
+                    default_logger.debug(
+                        "Loading model from cache: %s" % dict_source.get_cache_strategy())
+                    self.FREQ, self.total = data
                     load_from_cache_fail = False
-                except Exception:
+                else:
                     load_from_cache_fail = True
+            except Exception:
+                load_from_cache_fail = True
 
             if load_from_cache_fail:
-                self.cache_dict_resource(dict_source)
+                self.cache_dict_resource()
 
             self.initialized = True
             default_logger.debug(
@@ -140,25 +114,34 @@ class Tokenizer(object):
         if dict_source and change_dict_source:
             self.set_dictionary(dict_source)
         else:
-            dict_source = self.get_dict_source()
+            dict_source = self.get_dictionary()
 
         wlock = DICT_WRITING.get(dict_source, threading.RLock())
         DICT_WRITING[dict_source] = wlock
         with wlock:
-            self.FREQ, self.total = self.gen_pfdict(dict_source)
-            default_logger.debug(
-                "Dumping model to cache: %s" % self.dict_cache_strategy)
+            self.FREQ, self.total = dict_source.gen_pfdict()
             try:
-                self.dict_cache_strategy.dump((self.FREQ, self.total))
+                default_logger.debug("Dumping model to cache: %s" % self)
+                dict_source.dump_to_cache((self.FREQ, self.total))
             except Exception:
                 default_logger.exception("Dump cache file failed.")
             default_logger.debug(
-                "Dumping model to cache: %s done!" % self.dict_cache_strategy)
+                "Dumping model to cache: %s done!" % dict_source.get_cache_strategy())
 
         try:
             del DICT_WRITING[dict_source]
         except KeyError:
             pass
+
+    @staticmethod
+    def set_force_split_words(words):
+        if isinstance(words, typing.Set):
+            finalseg.Force_Split_Words = words
+        finalseg.Force_Split_Words = set([])
+
+    @staticmethod
+    def get_force_split_words():
+        return finalseg.Force_Split_Words
 
     def check_initialized(self):
         if not self.initialized:
@@ -344,7 +327,7 @@ class Tokenizer(object):
     def _lcut_for_search_no_hmm(self, sentence):
         return self.lcut_for_search(sentence, False)
 
-    def get_dict_source(self):
+    def get_dictionary(self):
         """
         Get the dictionary file object
         :return: dictionary file object
