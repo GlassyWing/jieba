@@ -83,14 +83,16 @@ class DictResource(Resource):
 
     def gen_pfdict(self):
         """
-        Read from a dictionary source, and count the numbers of words
-        :param dict_source: dictionary source
+        Read from the dictionary source, and count the numbers of words
         :return: A tuple in the form of ({'word1':freq1,...}, total_freq)
         """
         lfreq = {}
         ltotal = 0
-        for word, freq, tag in self.get_record():
-            freq = int(freq)
+        for word, freq, _ in self.get_record():
+            if freq:
+                freq = int(freq)
+            else:
+                freq = 0
             lfreq[word] = freq
             ltotal += freq
             for ch in xrange(len(word)):
@@ -125,7 +127,8 @@ class PureDictResource(DictResource):
         return self._words_seq
 
     def __eq__(self, other):
-        if self is other: return True
+        if self is other:
+            return True
         if isinstance(other, PureDictResource):
             return self._words_seq == other._words_seq and super(PureDictResource, self).__eq__(other)
         return False
@@ -169,7 +172,8 @@ class FileDictResource(DictResource):
         return '{}:{}'.format(super(FileDictResource, self).__str__(), self._path)
 
     def __eq__(self, other):
-        if self is other: return True
+        if self is other:
+            return True
         if isinstance(other, FileDictResource):
             return self._path == other._path and super(FileDictResource, self).__eq__(other)
         return False
