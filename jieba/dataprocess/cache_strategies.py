@@ -112,7 +112,8 @@ class FileCacheStrategy(CacheStrategy):
         return '{}:{}'.format(super(FileCacheStrategy, self).__str__(), self.get_cache_path())
 
     def __eq__(self, other):
-        if self is other: return True
+        if self is other:
+            return True
         if isinstance(other, FileCacheStrategy):
             return self.get_cache_path() == other.get_cache_path()
         return False
@@ -121,7 +122,6 @@ class FileCacheStrategy(CacheStrategy):
 class FileCacheStrategyForDict(FileCacheStrategy):
 
     def dump(self, data):
-
         fd, fpath = tempfile.mkstemp(dir=self.get_tmp_dir())
         with os.fdopen(fd, 'wb') as temp_cache_file:
             marshal.dump(data, temp_cache_file)
