@@ -1,13 +1,10 @@
 import threading
 import time
-import typing
 from math import log
 
 from rx.subjects import Subject
 
 from . import finalseg
-from ._common import *
-from ._compat import *
 from .dataprocess import *
 
 DICT_WRITING = {}
@@ -84,7 +81,6 @@ class Tokenizer(object):
             default_logger.debug("Building prefix dict from %s ..." % (dict_source or 'the default dictionary'))
             t1 = time.time()
             try:
-
                 data = dict_source.load_from_cache()
                 if data:
                     default_logger.debug(
@@ -97,24 +93,25 @@ class Tokenizer(object):
                 load_from_cache_fail = True
 
             if load_from_cache_fail:
-                self.cache_dict_resource()
+                self._cache_dict_resource()
+
+            # Filter deleted words
+            for w, f in self.FREQ.items():
+                if f == 0:
+                    finalseg.Force_Split_Words.add(w)
 
             self.initialized = True
             default_logger.debug(
                 "Loading model cost %.3f seconds." % (time.time() - t1))
-            default_logger.debug("Prefix dict has been built succesfully.")
+            default_logger.debug("Prefix dict has been built successfully.")
 
-    def cache_dict_resource(self, dict_source=None, change_dict_source=False):
+    def _cache_dict_resource(self):
         """
-        Forced cache dictionary source.
-        :param dict_source: dictionary source.
-        :param change_dict_source: Indicates should the dictionary source used be changed.
+        Cache dictionary source.
         :return:
         """
-        if dict_source and change_dict_source:
-            self.set_dictionary(dict_source)
-        else:
-            dict_source = self.get_dictionary()
+
+        dict_source = self.get_dictionary()
 
         wlock = DICT_WRITING.get(dict_source, threading.RLock())
         DICT_WRITING[dict_source] = wlock
@@ -132,16 +129,6 @@ class Tokenizer(object):
             del DICT_WRITING[dict_source]
         except KeyError:
             pass
-
-    @staticmethod
-    def set_force_split_words(words):
-        if isinstance(words, typing.Set):
-            finalseg.Force_Split_Words = words
-        finalseg.Force_Split_Words = set([])
-
-    @staticmethod
-    def get_force_split_words():
-        return finalseg.Force_Split_Words
 
     def check_initialized(self):
         if not self.initialized:
@@ -386,8 +373,7 @@ class Tokenizer(object):
             self.user_word_tag_tab[word] = tag
 
         # count the words that have changed.
-        changed_list = []
-        changed_list.append((word, freq, tag))
+        changed_list = [(word, freq, tag)]
         for ch in xrange(len(word) - 1):
             wfrag = word[:ch + 1]
             wfrag = wfrag.strip()
@@ -484,83 +470,3 @@ class Tokenizer(object):
 
     def _notify(self, changed_dict_list):
         self.dict_sub.on_next((changed_dict_list, self.dictionary))
-
-
-def _lcut_all(s):
-    return dt._lcut_all(s)
-
-
-def _lcut(s):
-    return dt._lcut(s)
-
-
-def _lcut_no_hmm(s):
-    return dt._lcut_no_hmm(s)
-
-
-def _lcut_all(s):
-    return dt._lcut_all(s)
-
-
-def _lcut_for_search(s):
-    return dt._lcut_for_search(s)
-
-
-def _lcut_for_search_no_hmm(s):
-    return dt._lcut_for_search_no_hmm(s)
-
-
-def _pcut(sentence, cut_all=False, HMM=True):
-    parts = strdecode(sentence).splitlines(True)
-    if cut_all:
-        result = pool.map(_lcut_all, parts)
-    elif HMM:
-        result = pool.map(_lcut, parts)
-    else:
-        result = pool.map(_lcut_no_hmm, parts)
-    for r in result:
-        for w in r:
-            yield w
-
-
-def _pcut_for_search(sentence, HMM=True):
-    parts = strdecode(sentence).splitlines(True)
-    if HMM:
-        result = pool.map(_lcut_for_search, parts)
-    else:
-        result = pool.map(_lcut_for_search_no_hmm, parts)
-    for r in result:
-        for w in r:
-            yield w
-
-
-def enable_parallel(processnum=None):
-    """
-    Change the module's `cut` and `cut_for_search` functions to the
-    parallel version.
-
-    Note that this only works using dt, custom Tokenizer
-    instances are not supported.
-    """
-    global pool, dt, cut, cut_for_search
-    from multiprocessing import cpu_count
-    if os.name == 'nt':
-        raise NotImplementedError(
-            "jieba: parallel mode only supports posix system")
-    else:
-        from multiprocessing import Pool
-    dt.check_initialized()
-    if processnum is None:
-        processnum = cpu_count()
-    pool = Pool(processnum)
-    cut = _pcut
-    cut_for_search = _pcut_for_search
-
-
-def disable_parallel():
-    global pool, dt, cut, cut_for_search
-    if pool:
-        pool.close()
-        pool = None
-    cut = dt.cut
-    cut_for_search = dt.cut_for_search

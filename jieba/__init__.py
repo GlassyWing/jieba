@@ -35,9 +35,6 @@ suggest_freq = dt.suggest_freq
 tokenize = dt.tokenize
 user_word_tag_tab = dt.user_word_tag_tab
 register_notifier = dt.register_notifier
-cache_dict_resource = dt.cache_dict_resource
-set_force_split_words = Tokenizer.set_force_split_words
-get_force_split_words = Tokenizer.get_force_split_words
 
 
 def _lcut_all(s):
@@ -93,16 +90,12 @@ def enable_parallel(processnum=None):
     Change the module's `cut` and `cut_for_search` functions to the
     parallel version.
 
-    Note that this only works using dt, custom Tokenizer
+    Note that custom Tokenizer
     instances are not supported.
     """
     global pool, dt, cut, cut_for_search
     from multiprocessing import cpu_count
-    if os.name == 'nt':
-        raise NotImplementedError(
-            "jieba: parallel mode only supports posix system")
-    else:
-        from multiprocessing import Pool
+    from multiprocessing import Pool
     dt.check_initialized()
     if processnum is None:
         processnum = cpu_count()
